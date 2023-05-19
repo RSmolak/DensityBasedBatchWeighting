@@ -7,9 +7,11 @@ from sklearn.model_selection import train_test_split
 
 from densityWeights import get_kde_weights
 from model import MyNNModel
+from datasets.custom_dataset import WeightedDataset
 
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 
 # Learning hyperparameters
@@ -21,19 +23,18 @@ X, y = make_classification(n_samples=100, n_features=2, n_informative=2, n_redun
 X_train, X_test, y_train, y_test= train_test_split(X, y, test_size=0.2, random_state=42)
 
 
-# Convert the arrays to a Pandas DataFrame
-df = pd.DataFrame(data=np.c_[X, y], columns=["Feature 1", "Feature 2", "Target"])
-df_train = pd.DataFrame(data=np.c_[X_train, y_train], columns=["Feature 1", "Feature 2", "Target"])
-df_test = pd.DataFrame(data=np.c_[X_test, y_test], columns=["Feature 1", "Feature 2", "Target"])
+generated_dataset_weights = get_kde_weights(X_train)
+generated_dataset = WeightedDataset(X_train, y_train, generated_dataset_weights)
+
+weights = np.array(get_kde_weights(X))
+sampler = WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
 
 
-weights = get_kde_weights(X)
+train = DataLoader(dataset=generated_dataset, batch_size=10, sampler=sampler)
 
-train = torch.tensor(df_train.values)
-test = torch.tensor(df_test.values)
 
 # Define model
-model = MyNNModel(train.shape[1]-1, 1)
+model = MyNNModel(len(X_train[0]), 1)
 criterion = nn.MSELoss()
 optimizer = optim.SGD(model.parameters(), lr=0.01)
 
@@ -50,12 +51,12 @@ for epoch in range(num_epoch):
 # Create neural network model
 
 
-colors = df["Target"].map({0: 'blue', 1: 'red'})
-
-plt.figure(figsize=(10, 7))
-plt.scatter(df["Feature 1"], df["Feature 2"], c=colors, s=weights)
-plt.xlabel('Feature 1')
-plt.ylabel('Feature 2')
-plt.title('Scatter plot of the dataset')
-plt.show()
+# colors = df["Target"].map({0: 'blue', 1: 'red'})
+#
+# plt.figure(figsize=(10, 7))
+# plt.scatter(df["Feature 1"], df["Feature 2"], c=colors, s=weights)
+# plt.xlabel('Feature 1')
+# plt.ylabel('Feature 2')
+# plt.title('Scatter plot of the dataset')
+# plt.show()
 
