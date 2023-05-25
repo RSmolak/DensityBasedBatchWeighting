@@ -1,5 +1,10 @@
 import torch.nn as nn
 import torch
+import torch.optim as optim
+from sklearn.base import BaseEstimator, ClassifierMixin
+from densityWeights import get_kde_weights
+from datasets.custom_dataset import WeightedDataset
+from torch.utils.data import DataLoader
 class MyNNModel(nn.Module):
     def __init__(self, input_size, output_size):
         super(MyNNModel, self).__init__()
@@ -12,3 +17,30 @@ class MyNNModel(nn.Module):
         x = torch.relu(self.fc2(x))
         x = self.fc3(x)
         return x
+
+class DensityBasedNNClassifier(BaseEstimator, ClassifierMixin):
+    def __init__(self, model, optimizer, criterion, batch_size, num_epoch):
+        self.model = model
+        self.criterion = criterion
+        self.batch_size = batch_size
+        self.optimizer = optimizer
+        self.num_epoch = num_epoch
+
+    def fit(self, X, y=None):
+        generated_dataset_weights = get_kde_weights(X)
+        generated_dataset = WeightedDataset(X, y, generated_dataset_weights)
+        train_generated_data_loader = DataLoader(generated_dataset, self.batch_size, shuffle=True)
+
+        for epoch in range(self.num_epoch):
+            self.model.train()
+            for i, data in enumerate(train_generated_data_loader):
+                batch_data, batch_targets, weights = data
+                outputs = self.model(batch_data.float()).squeeze()
+                raw_loss = self.criterion(outputs, batch_targets.float())
+                weighted_loss = (raw_loss * weights).mean()
+                self.optimizer.zero_grad()
+                weighted_loss.backward()
+                self.optimizer.step()
+                print(f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {weighted_loss.item()}')
+
+        return self
