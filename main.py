@@ -12,12 +12,12 @@ import numpy as np
 
 
 # Learning hyperparameters
-num_epoch = 100
+num_epoch = 500
 batch_size = 100
-learning_rate = 0.00005
+learning_rate = 0.001
 
 # Generate a dataset
-X, y = make_classification(n_samples=1000, n_features=2, n_informative=2, n_redundant=0)
+X, y = make_classification(n_samples=2000, n_features=15, n_informative=15, n_redundant=0)
 generated_dataset = (X,y)
 
 
@@ -59,5 +59,5 @@ for dataset_idx, (X,y) in enumerate(DATASETS):
 
 
 print(scores)
-np.save("scores", scores)
+np.save("scores_temp", scores)
 
