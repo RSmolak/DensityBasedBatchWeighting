@@ -12,7 +12,7 @@ import numpy as np
 
 
 # Learning hyperparameters
-num_epoch = 1000
+num_epoch = 100
 batch_size = 100
 learning_rate = 0.00005
 
@@ -26,7 +26,14 @@ model = MyNNModel(len(X[0]), 1)
 criterion = nn.MSELoss(reduction='none')
 optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
-dbnn_classifier = DensityBasedNNClassifier(model, optimizer, criterion, batch_size, num_epoch)
+dbnn_classifier = DensityBasedNNClassifier(
+    model_class=MyNNModel,
+    input_size=len(X[0]),
+    output_size=1,
+    learning_rate=learning_rate,
+    batch_size=batch_size,
+    num_epoch=num_epoch
+)
 
 DATASETS = [
     generated_dataset,

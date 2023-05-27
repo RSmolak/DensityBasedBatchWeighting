@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+import torch.optim as optim
 from sklearn.base import BaseEstimator, ClassifierMixin
 from densityWeights import get_kde_weights
 from datasets.custom_dataset import WeightedDataset
@@ -20,14 +21,20 @@ class MyNNModel(nn.Module):
         return x
 
 class DensityBasedNNClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, model, optimizer, criterion, batch_size, num_epoch):
-        self.model = model
-        self.criterion = criterion
+    def __init__(self, model_class, input_size, output_size, learning_rate, batch_size, num_epoch):
+        self.model_class = model_class
+        self.input_size = input_size
+        self.output_size = output_size
+        self.learning_rate = learning_rate
         self.batch_size = batch_size
-        self.optimizer = optimizer
         self.num_epoch = num_epoch
 
     def fit(self, X, y):
+        # Inicjalizacja modelu, optymalizatora i kryterium strat
+        self.model = self.model_class(self.input_size, self.output_size)
+        self.criterion = nn.MSELoss(reduction='none')
+        self.optimizer = optim.SGD(self.model.parameters(), lr=self.learning_rate)
+
         X = torch.tensor(X, dtype=torch.float)
         y = torch.tensor(y, dtype=torch.long)
         generated_dataset_weights = get_kde_weights(X)
