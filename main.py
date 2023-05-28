@@ -2,33 +2,44 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.base import clone
 from sklearn.metrics import accuracy_score
+from sklearn.datasets import load_breast_cancer
 
 from model import MyNNModel, DensityBasedNNClassifier
 
-import torch.nn as nn
-import torch.optim as optim
+import pandas as pd
 
 import numpy as np
 
 
 # Learning hyperparameters
-num_epoch = 500
+num_epoch = 1000
 batch_size = 100
-learning_rate = 0.001
+learning_rate = 0.0000005
 
-# Generate a dataset
-X, y = make_classification(n_samples=2000, n_features=15, n_informative=15, n_redundant=0)
+# Create datasets
+X, y = make_classification(n_samples=1000, n_features=15, n_informative=15, n_redundant=0)
 generated_dataset = (X,y)
 
+breast_cancer_dataset = load_breast_cancer(return_X_y=True)
+#print(breast_cancer_dataset)
 
-# Define model
-model = MyNNModel(len(X[0]), 1)
-criterion = nn.MSELoss(reduction='none')
-optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+data = pd.read_csv('datasets/heart.csv')
+label = 'output'
+features = data.columns.tolist()
+features.remove(label)
+heart_dataset = (data[features].values, data[label].values)
+#print(heart_dataset)
+
+data = pd.read_csv('datasets/water_potability.csv')
+label = 'Potability'
+features = data.columns.tolist()
+features.remove(label)
+water_potability_dataset = (data[features].values, data[label].values)
+# print(water_potability_dataset)
+
 
 dbnn_classifier = DensityBasedNNClassifier(
     model_class=MyNNModel,
-    input_size=len(X[0]),
     output_size=1,
     learning_rate=learning_rate,
     batch_size=batch_size,
@@ -36,7 +47,10 @@ dbnn_classifier = DensityBasedNNClassifier(
 )
 
 DATASETS = [
-    generated_dataset,
+    #generated_dataset,
+    #breast_cancer_dataset,
+    heart_dataset,
+    #water_potability_dataset
 ]
 
 CLASSIFIERS = [
@@ -51,7 +65,7 @@ scores = np.zeros(shape = (len(DATASETS), len(CLASSIFIERS), rskf.get_n_splits())
 for dataset_idx, (X,y) in enumerate(DATASETS):
     for classifier_idx, clf_prot in enumerate(CLASSIFIERS):
         for fold_idx, (train, test) in enumerate(rskf.split(X, y)):
-            clf = clone(clf_prot) # jak nie ma clone to się uczy, a jak jest to nie. Pewnie jakiś brak spójności między scikit i pytorch
+            clf = clone(clf_prot)
             clf.fit(X[train], y[train])
             y_pred = clf.predict(X[test])
             score = accuracy_score(y[test], y_pred)

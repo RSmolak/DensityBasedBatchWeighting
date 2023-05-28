@@ -8,10 +8,10 @@ from torch.utils.data import DataLoader
 class MyNNModel(nn.Module):
     def __init__(self, input_size, output_size):
         super(MyNNModel, self).__init__()
-        self.fc1 = nn.Linear(input_size, 100)
-        self.fc2 = nn.Linear(100, 100)
-        self.fc3 = nn.Linear(100, 100)
-        self.fc4 = nn.Linear(100, output_size)
+        self.fc1 = nn.Linear(input_size, 32)
+        self.fc2 = nn.Linear(32, 32)
+        self.fc3 = nn.Linear(32, 32)
+        self.fc4 = nn.Linear(32, output_size)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -21,9 +21,8 @@ class MyNNModel(nn.Module):
         return x
 
 class DensityBasedNNClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, model_class, input_size, output_size, learning_rate, batch_size, num_epoch):
+    def __init__(self, model_class, output_size, learning_rate, batch_size, num_epoch):
         self.model_class = model_class
-        self.input_size = input_size
         self.output_size = output_size
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -31,7 +30,8 @@ class DensityBasedNNClassifier(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         # Inicjalizacja modelu, optymalizatora i kryterium strat
-        self.model = self.model_class(self.input_size, self.output_size)
+
+        self.model = self.model_class(X.shape[1], self.output_size)
         self.criterion = nn.MSELoss(reduction='none')
         self.optimizer = optim.SGD(self.model.parameters(), lr=self.learning_rate)
 
