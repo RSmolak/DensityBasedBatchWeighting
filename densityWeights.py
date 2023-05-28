@@ -5,7 +5,7 @@ def get_kde_weights(data: np.ndarray, transform = None):
     weights = []
     kde = gaussian_kde(data)
     for sample in data.T:
-        weights.append(1/kde.evaluate(sample))
+        weights.append(1/kde.evaluate(sample)[0])
     if transform == 'normalize':
         weights = [float(i)/sum(weights) for i in weights]
     if transform == 'standardize':
@@ -18,4 +18,18 @@ def get_kde_weights(data: np.ndarray, transform = None):
         mean = np.mean(weights)
         multiplicator  = 1/mean
         weights = [weight * multiplicator for weight in weights]
+    return weights
+
+def get_weights(labels : np.ndarray):
+    unique_labels, label_counts = np.unique(labels, return_counts=True)
+    total_samples = len(labels)
+    class_weights = {}
+
+    for label, count in zip(unique_labels, label_counts):
+        class_weights[label] = total_samples / (len(unique_labels) * count)
+
+    weights = [class_weights[label] for label in labels]
+    mean = np.mean(weights)
+    multiplicator = 1 / mean
+    weights = [weight * multiplicator for weight in weights]
     return weights
