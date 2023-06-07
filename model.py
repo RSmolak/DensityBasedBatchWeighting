@@ -59,7 +59,7 @@ class CustomNNClassifier(BaseEstimator, ClassifierMixin):
                 self.optimizer.zero_grad()
                 weighted_loss.backward()
                 self.optimizer.step()
-                if epoch % 50 == 0 and i == 0:
+                if (epoch % 50 == 0 or epoch == self.num_epoch-1) and i == 0:
                     print(f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {weighted_loss.item()}')
         return self
 

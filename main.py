@@ -3,7 +3,9 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.base import clone
 from sklearn.metrics import accuracy_score
 from sklearn.datasets import load_breast_cancer
-#from sklearn.datasets import load_
+from ADASYN import CustomNNADASYNClassifier
+from OS import CustomNNRandomOversamplingClassifier
+from SMOTE import CustomNNSMOTEClassifier
 
 from model import MyNNModel, CustomNNClassifier
 
@@ -29,6 +31,8 @@ label = 'output'
 features = data.columns.tolist()
 features.remove(label)
 heart_dataset = (data[features].values, data[label].values)
+unique_labels, label_counts = np.unique(data[label].values, return_counts=True)
+print(unique_labels,label_counts)
 #print(heart_dataset)
 
 data = pd.read_csv('datasets/water_potability.csv')
@@ -64,6 +68,32 @@ no_weighting_classifier = CustomNNClassifier(
     num_epoch=num_epoch,
     imbalanced_opt_method=None
 )
+adasyn_classifier = CustomNNADASYNClassifier(
+    model_class=MyNNModel,
+    output_size=1,
+    learning_rate=learning_rate,
+    batch_size=batch_size,
+    num_epoch=num_epoch,
+    imbalanced_opt_method=None
+)
+ros_classifier = CustomNNRandomOversamplingClassifier(
+    model_class=MyNNModel,
+    output_size=1,
+    learning_rate=learning_rate,
+    batch_size=batch_size,
+    num_epoch=num_epoch,
+    imbalanced_opt_method=None
+)
+smote_classifier = CustomNNSMOTEClassifier(
+    model_class=MyNNModel,
+    output_size=1,
+    learning_rate=learning_rate,
+    batch_size=batch_size,
+    num_epoch=num_epoch,
+    imbalanced_opt_method=None
+)
+
+
 
 DATASETS = [
     generated_dataset,
@@ -72,10 +102,14 @@ DATASETS = [
     #water_potability_dataset
 ]
 
+
 CLASSIFIERS = [
     no_weighting_classifier,
     count_weighting_classifier,
     density_weighting_classifier,
+    #adasyn_classifier,
+    ros_classifier,
+    smote_classifier,
 ]
 
 
