@@ -20,8 +20,11 @@ batch_size = 100
 learning_rate = 0.00005
 
 # Create datasets
-X, y = make_classification(n_samples=1000, n_features=2, n_informative=2, n_redundant=0, weights=[0.9,0.1])
-generated_dataset = (X,y)
+generated_datasets = []
+imbalanced_ratios = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.97, 0.99]
+for ratio in imbalanced_ratios:
+    X, y = make_classification(n_samples=1000, n_features=15, n_informative=15, n_redundant=0, weights=[ratio,1-ratio])
+    generated_datasets.append((X,y))
 
 breast_cancer_dataset = load_breast_cancer(return_X_y=True)
 #print(breast_cancer_dataset)
@@ -96,11 +99,11 @@ smote_classifier = CustomNNSMOTEClassifier(
 
 
 DATASETS = [
-    generated_dataset,
-    breast_cancer_dataset,
-    heart_dataset,
+    #breast_cancer_dataset,
+    #heart_dataset,
     #water_potability_dataset
 ]
+DATASETS.extend(generated_datasets)
 
 
 CLASSIFIERS = [
@@ -108,8 +111,8 @@ CLASSIFIERS = [
     count_weighting_classifier,
     density_weighting_classifier,
     #adasyn_classifier,
-    ros_classifier,
-    smote_classifier,
+    #ros_classifier,
+    #smote_classifier,
 ]
 
 
