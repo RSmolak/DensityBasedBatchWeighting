@@ -1,7 +1,7 @@
 from sklearn.datasets import make_classification
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.base import clone
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, balanced_accuracy_score, recall_score
 from sklearn.datasets import load_breast_cancer
 from ADASYN import CustomNNADASYNClassifier
 from OS import CustomNNRandomOversamplingClassifier
@@ -96,8 +96,6 @@ smote_classifier = CustomNNSMOTEClassifier(
     imbalanced_opt_method=None
 )
 
-
-
 DATASETS = [
     #breast_cancer_dataset,
     #heart_dataset,
@@ -117,7 +115,11 @@ CLASSIFIERS = [
 
 
 rskf = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=42)
-scores = np.zeros(shape = (len(DATASETS), len(CLASSIFIERS), rskf.get_n_splits()))
+scores_acc = np.zeros(shape = (len(DATASETS), len(CLASSIFIERS), rskf.get_n_splits()))
+scores_bal_acc = np.zeros(shape = (len(DATASETS), len(CLASSIFIERS), rskf.get_n_splits()))
+scores_rec = np.zeros(shape = (len(DATASETS), len(CLASSIFIERS), rskf.get_n_splits()))
+scores_prec = np.zeros(shape = (len(DATASETS), len(CLASSIFIERS), rskf.get_n_splits()))
+
 
 
 for dataset_idx, (X,y) in enumerate(DATASETS):
@@ -127,10 +129,19 @@ for dataset_idx, (X,y) in enumerate(DATASETS):
             clf = clone(clf_prot)
             clf.fit(X[train], y[train])
             y_pred = clf.predict(X[test])
-            score = accuracy_score(y[test], y_pred)
-            scores[dataset_idx, classifier_idx, fold_idx] = score
+            score_acc = accuracy_score(y[test], y_pred)
+            scores_acc[dataset_idx, classifier_idx, fold_idx] = score_acc
+            score_bal_acc = balanced_accuracy_score(y[test], y_pred)
+            scores_bal_acc[dataset_idx, classifier_idx, fold_idx] = score_acc
+            score_rec = recall_score(y[test], y_pred)
+            scores_rec[dataset_idx, classifier_idx, fold_idx] = score_acc
+            score_prec = precision_score(y[test], y_pred)
+            scores_prec[dataset_idx, classifier_idx, fold_idx] = score_acc
 
 
-print(scores)
-np.save("scores_temp", scores)
+print('ACC:\n', scores_acc)
+print('BAL_ACC:\n', scores_bal_acc)
+print('REC:\n', scores_rec)
+print('PREC:\n', scores_prec)
+#np.save("scores_temp", scores)
 
