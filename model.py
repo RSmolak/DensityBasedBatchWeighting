@@ -6,6 +6,10 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from densityWeights import get_kde_weights, get_weights
 from datasets.custom_dataset import WeightedDataset
 from torch.utils.data import DataLoader
+
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f'Using device: {device}')
 class MyNNModel(nn.Module):
     def __init__(self, input_size, output_size):
         super(MyNNModel, self).__init__()
@@ -34,6 +38,7 @@ class CustomNNClassifier(BaseEstimator, ClassifierMixin):
         # Inicjalizacja modelu, optymalizatora i kryterium strat
 
         self.model = self.model_class(X.shape[1], self.output_size)
+        self.model.to(device)
         self.criterion = nn.BCEWithLogitsLoss(reduction='none')
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
@@ -44,8 +49,8 @@ class CustomNNClassifier(BaseEstimator, ClassifierMixin):
             generated_dataset_weights = get_weights(y)
         else:
             generated_dataset_weights = np.ones(len(y))
-        X = torch.tensor(X, dtype=torch.float)
-        y = torch.tensor(y, dtype=torch.long)
+        X = torch.tensor(X, dtype=torch.float).to(device)
+        y = torch.tensor(y, dtype=torch.long).to(device)
         dataset = WeightedDataset(X, y, generated_dataset_weights)
         train_generated_data_loader = DataLoader(dataset, self.batch_size, shuffle=True)
 
@@ -53,6 +58,9 @@ class CustomNNClassifier(BaseEstimator, ClassifierMixin):
             self.model.train()
             for i, data in enumerate(train_generated_data_loader):
                 batch_data, batch_targets, weights = data
+                batch_data = batch_data.to(device)
+                batch_targets = batch_targets.to(device)
+                weights = weights.to(device)
                 outputs = self.model(batch_data.float()).squeeze()
                 raw_loss = self.criterion(outputs, batch_targets.float())
                 weighted_loss = (raw_loss * weights).mean()
@@ -65,8 +73,8 @@ class CustomNNClassifier(BaseEstimator, ClassifierMixin):
 
     def predict(self, X):
         self.model.eval()  # ustawiamy model w tryb ewaluacji
-        inputs = torch.tensor(X, dtype=torch.float)
+        inputs = torch.tensor(X, dtype=torch.float).to(device)
         with torch.no_grad():  # wyłączamy obliczanie gradientów
             outputs = self.model(inputs)
-        predicted = torch.round(torch.sigmoid(outputs)).numpy().flatten()  # zwracamy numpy array z przewidywaniami
+        predicted = torch.round(torch.sigmoid(outputs)).cpu().numpy().flatten()  # zwracamy numpy array z przewidywaniami
         return predicted

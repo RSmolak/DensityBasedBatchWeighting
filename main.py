@@ -10,7 +10,6 @@ from SMOTE import CustomNNSMOTEClassifier
 from model import MyNNModel, CustomNNClassifier
 
 import pandas as pd
-
 import numpy as np
 
 
@@ -21,7 +20,7 @@ learning_rate = 0.00005
 
 # Create datasets
 generated_datasets = []
-imbalanced_ratios = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.97, 0.99]
+imbalanced_ratios = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
 for ratio in imbalanced_ratios:
     X, y = make_classification(n_samples=1000, n_features=15, n_informative=15, n_redundant=0, weights=[ratio,1-ratio])
     generated_datasets.append((X,y))
