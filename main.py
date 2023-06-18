@@ -16,11 +16,11 @@ import numpy as np
 # Learning hyperparameters
 num_epoch = 100
 batch_size = 100
-learning_rate = 0.00005
+learning_rate = 0.005
 
 # Create datasets
 generated_datasets = []
-imbalanced_ratios = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
+imbalanced_ratios = [0.55, 0.6, 0.7, 0.8, 0.9, 0.95]
 for ratio in imbalanced_ratios:
     X, y = make_classification(n_samples=1000, n_features=15, n_informative=15, n_redundant=0, weights=[ratio,1-ratio])
     generated_datasets.append((X,y))
@@ -108,8 +108,8 @@ CLASSIFIERS = [
     count_weighting_classifier,
     density_weighting_classifier,
     #adasyn_classifier,
-    #ros_classifier,
-    #smote_classifier,
+    ros_classifier,
+    smote_classifier,
 ]
 
 
@@ -142,5 +142,8 @@ print('ACC:\n', scores_acc)
 print('BAL_ACC:\n', scores_bal_acc)
 print('REC:\n', scores_rec)
 print('PREC:\n', scores_prec)
-#np.save("scores_temp", scores)
+np.save("scores_acc", scores_acc)
+np.save("scores_bal_acc", scores_bal_acc)
+np.save("scores_rec", scores_rec)
+np.save("scores_prec", scores_prec)
 
