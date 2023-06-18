@@ -2,10 +2,14 @@ import numpy as np
 import torch.nn as nn
 import torch
 import torch.optim as optim
+from torch.utils.data import DataLoader
+
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, precision_score, recall_score
+
 from densityWeights import get_kde_weights, get_weights
 from datasets.custom_dataset import WeightedDataset
-from torch.utils.data import DataLoader
+
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -33,6 +37,10 @@ class CustomNNClassifier(BaseEstimator, ClassifierMixin):
         self.batch_size = batch_size
         self.num_epoch = num_epoch
         self.imbalanced_opt_method = imbalanced_opt_method
+        self.accuracy_stats = []
+        self.bal_accuracy_stats = []
+        self.precision_stats = []
+        self.recall_stats = []
 
     def fit(self, X, y):
         # Inicjalizacja modelu, optymalizatora i kryterium strat
@@ -56,6 +64,8 @@ class CustomNNClassifier(BaseEstimator, ClassifierMixin):
 
         for epoch in range(self.num_epoch):
             self.model.train()
+            epoch_output = []
+            epoch_target = []
             for i, data in enumerate(train_generated_data_loader):
                 batch_data, batch_targets, weights = data
                 batch_data = batch_data.to(device)
@@ -69,6 +79,14 @@ class CustomNNClassifier(BaseEstimator, ClassifierMixin):
                 self.optimizer.step()
                 if (epoch % 50 == 0 or epoch == self.num_epoch-1) and i == 0:
                     print(f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {weighted_loss.item()}')
+                epoch_output.extend(outputs.cpu().detach().numpy())
+                epoch_target.extend(batch_targets.cpu().detach().numpy())
+            epoch_output = torch.round(torch.sigmoid(torch.tensor(epoch_output))).numpy()
+            epoch_target = np.array(epoch_target)
+            self.accuracy_stats.append(accuracy_score(epoch_target, epoch_output))
+            self.bal_accuracy_stats.append(balanced_accuracy_score(epoch_target, epoch_output))
+            self.precision_stats.append(precision_score(epoch_target, epoch_output, zero_division=1))
+            self.recall_stats.append(recall_score(epoch_target, epoch_output))
         return self
 
     def predict(self, X):
@@ -78,3 +96,13 @@ class CustomNNClassifier(BaseEstimator, ClassifierMixin):
             outputs = self.model(inputs)
         predicted = torch.round(torch.sigmoid(outputs)).cpu().numpy().flatten()  # zwracamy numpy array z przewidywaniami
         return predicted
+
+    def get_stat(self, stat):
+        if stat == 'accuracy':
+            return self.accuracy_stats
+        elif stat == 'bal_accuracy':
+            return self.bal_accuracy_stats
+        elif stat == 'precision':
+            return self.precision_stats
+        elif stat == 'recall':
+            return self.recall_stats
